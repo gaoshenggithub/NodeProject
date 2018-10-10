@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" ?>  
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    <mapper namespace="org.anonymous.note.dao.UserDao">
+    	<!-- 登录操作 -->
+    	<!-- 根据用户名查找passwd -->
+    	<select 
+    		id="findByName" 
+    		parameterType = "string"
+    		resultType="org.anonymous.note.entiry.User">
+    		SELECT
+    			* 
+    		FROM
+    			cn_user 
+    		WHERE 
+    			cn_user_name = #{name}
+    	</select>
+    	<!-- 注册用户 -->
+    	<insert 
+    		id="save" 
+    		parameterType="org.anonymous.note.entiry.User">
+    		INSERT INTO 
+    			cn_user(
+    			cn_user_id,cn_user_name,
+    			cn_user_password,cn_user_token,
+    			cn_user_nick)
+    		VALUES
+    			(#{cn_user_id},#{cn_user_name},
+    			#{cn_user_password},#{cn_user_token},
+    			#{cn_user_nick});
+    	</insert>
+    	<!-- 查询密码是否正确 -->
+    	<select id="selectPwd"
+    				parameterType="string"
+    				resultType="org.anonymous.note.entiry.User">
+    					select * from cn_user where cn_user_id = #{cn_user_id}
+    				</select>
+    	<!-- 修改密码操作 -->
+    	<update id="updatePassword"
+    				parameterType = "org.anonymous.note.entiry.User">
+    					UPDATE 
+    						cn_user 
+    					SET 
+    						<if test="cn_user_password!=null">
+	    						cn_user_password = #{cn_user_password}
+    						</if>
+    					WHERE 
+    						cn_user_id = #{cn_user_id}
+    				</update>
+    </mapper>

@@ -1,0 +1,68 @@
+<html>
+	<head>
+		<meta charset="utf-8"/>
+		<title>列表</title>
+		<script type="text/javascript" src = "scripts/jquery.min.js"></script>
+		<script type="text/javascript" src = "scripts/basePath/base.js"></script>
+		<script type="text/javascript">
+		$(function(){
+			$("#searchBtn").click(function(){
+				$("#tb_list").empty();
+				var title = $("#title").val().trim();
+				var status = $("#status").val().trim();
+				var start = $("#start").val().trim();
+				var end = $("#end").val().trim();
+				//将数据封装
+				//发送ajax请求
+				$.ajax({
+					url : basePath+"note/search.do",
+					type : "post",
+					data :{"title":title,"status":status,"beginTime":start,"endTime":end},
+					dataType : "json",
+					success : function(result){
+						if(result.status==0){
+							var noteData = result.data;
+							var msg = result.msg;
+							var str = msg.replace("查询成功!","");
+							$("#size").val(str);
+							for (var index = 0; index < noteData.length; index++) {
+								var id = noteData[index].cn_note_id;
+								var title = noteData[index].cn_note_title;
+								var time = noteData[index].createTime;
+								var tr_td = "<tr>"+
+												"<td>"+id+"</td>"+
+												"<td>"+title+"</td>"+
+												"<td>"+time+"</td>"+
+											"</tr>";
+								//创建节点
+								var tds = $(tr_td);
+								$("#tb_list").append(tds);			
+							}
+						}
+					},
+					error : function(){
+					
+					}
+				});
+			});
+		});
+		</script>
+	</head>
+	<body>
+		标题:<input type ="text" id = "title" value = ""/>
+		状态:<select id="status">
+				<option value = "0">全部</option>
+				<option value = "1">正常</option>
+				<option value = "2">删除</option>
+			</select>
+			<br/>
+		开始日期:<input type = "text" id = "start" value = ""/>	
+		结束日期:<input type = "text" id = "end" value = ""/>
+			<input type = "button" value = "查询" id = "searchBtn"/>
+		记录条数:<input id = "size" type = "text" value = "" disabled="disabled"/>	
+		<hr/>
+		<table id = "tb_list">
+			
+		</table>	
+	</body>
+</html>

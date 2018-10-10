@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" ?>  
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    <mapper namespace = "org.anonymous.note.dao.EmpDao">
+    	<!-- 执行完毕之后..数据库会将生成的主键返回给Emp的id -->
+    	<insert id="save"
+				useGeneratedKeys="true"
+				keyProperty="id"
+    			parameterType="org.anonymous.note.entiry.Emp">
+				INSERT INTO 
+					cn_emp(name,age) 
+				VALUES
+					(#{name},#{age})   			
+    	</insert>
+    	
+    	<insert id="oracleSave"
+    			parameterType = "org.anonymous.note.entiry.Emp">
+    		<!-- 在insert语句执行前,执行select..获取
+    		序列值的SQL
+    		将返回的id值给Emp参数的id属性 -->
+    		<selectKey keyProperty = "id"
+    				   resultType = "int"
+    				   order="BEFORE">
+				select emp_seq.nextval from dual
+    		</selectKey>	
+    		INSERT INTO 
+				cn_emp(name,age) 
+			VALUES
+				(#{name},#{age})  
+    	</insert>
+    </mapper>

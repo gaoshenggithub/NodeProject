@@ -1,0 +1,554 @@
+﻿<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>我的笔记</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="x-pjax-version" content="v173">
+        <link rel="apple-touch-icon-precomposed" sizes="144x144" href="ico/favico-144-precomposed.png">
+        <link rel="apple-touch-icon-precomposed" sizes="114x114" href="ico/favico-114-precomposed.png">
+        <link rel="apple-touch-icon-precomposed" sizes="72x72" href="ico/favico-72-precomposed.png">
+        <link rel="apple-touch-icon-precomposed" href="ico/favico-57-precomposed.png">
+        <link rel="shortcut icon" href="ico/favico.png">
+        <link rel="shortcut icon" href="ico/favicon.ico">
+        <link rel="stylesheet" href="styles/icon.css"/>
+        <link rel="stylesheet" href="styles/main.css"/>
+		<!-- Google-Code代码高亮CSS -->
+        <link rel="stylesheet" href="styles/prettify.css"/>
+		<!-- Ueditor编辑器CSS -->
+		<link href="styles/umeditor.min.css" type="text/css" rel="stylesheet">
+		<!-- 导入jQuery库 -->
+		<script type="text/javascript" src = "scripts/jquery.min.js"></script>
+		<!-- 请求地址 -->
+		<script type="text/javascript" src = "scripts/basePath/base.js"></script>
+		<!-- 导入cookie.js -->
+		<script type="text/javascript" src = "scripts/cookie_util.js"></script>
+		<!-- 导入全部笔记本的JS -->
+		<script type="text/javascript" src = "scripts/notebook/notebook.js"></script>
+		<!-- 导入笔记JS -->
+		<script type="text/javascript" src = "scripts/note/note.js"></script>
+		
+	
+		<script type="text/javascript">
+		//获取用户的Id信息
+		var uId = getCookie("uId");
+		var um;//笔记编辑区域的编辑器变量
+		//用户登录之后就会产生一个cookie值.
+		//程序根据cookie来判定用户是否登录
+		if(uId==null){
+			window.location.href = "log_in.html";
+		}
+		$(function(){
+			//页面在载入之后开始初始化编辑区变量
+			um = UM.getEditor('myEditor');
+			noteBookLoads();
+			/*
+			使用异步处理方式
+			$("#book_list li").click(function(){
+			}); */
+			//笔记本JS--->start
+			//页面加载之后.自动发送请求
+			$("#book_list").on("click","li",loadNotes);
+			
+			//点击添加笔记本按钮+弹出对话框(打开对话框)
+			$("#add_notebook").click(showAddBookWindow);
+			
+			//关闭对话框(点击X和取消都是关闭)
+			$("#can").on("click",".cancle,.close",closeWindow);
+			
+			//点击创建按钮
+			$("#can").on("click","#sure_addnotebook",addNoteBookNames);
+			//笔记本JS--->end
+			
+			//笔记JS--->start
+			//打开笔记窗口
+			$("#add_note").click(showNoteWindows);
+			//关闭笔记窗口
+			$("#can").on("click",".cancle,.close",closeNoteWindows);
+			//加载笔记列表
+			$("#can").on("click","#sure_addnote",addNotes);
+			//笔记本JS--->end
+			
+			//点击笔记.触发编辑功能
+			$("#note_list").on("click","li",showNote);
+			
+			//点击保存笔记(更新操作)
+			$("#save_note").click(upateNotes);
+			
+			//显示笔记菜单
+			$("#note_list").on("click",".btn_slide_down",function(){
+				//隐藏掉其他列
+				$("#note_list .note_menu").hide();
+				//获取当前列表的li
+				var $lis = $(this).parents("li");
+				var $menu = $lis.find(".note_menu");
+				$menu.show();//显示当前的列表
+			});
+			
+			//移开鼠标隐藏
+			$("#note_list").on("mouseout",".note_menu",function(){
+				$(this).hide();			
+			});
+			
+			//选中鼠标显示
+			$("#note_list").on("mouseover",".note_menu",function(){
+				$(this).show();			
+			});
+			
+			//将笔记放回回收站
+			$("#note_list").on("click",".btn_delete",resysle);
+			
+			//点击分享触发函数
+			$("#note_list").on("click",".btn_share",shareNote);
+			
+			//笔记搜索功能(搜索分享)
+			$("#search_note").keydown(searchRecycle);
+			
+			//检索笔记单击处理
+			$("#search_recycle").on("click","li",showShareNote);
+			
+			//点击回收站展示回收站的笔记
+			$("#rollback_button").click(recycleShowNote);
+			
+			//点击恢复按钮处理
+			$("#replayNoteInput").on("click",".btn_replay",replayNoteInput);
+			
+			//恢复笔记
+			$("#can").on("click","#sure_replay", replayNote);
+			
+			//出现收藏笔记
+			$("#like_button").click(function(){
+				$("#pc_part_1").show();
+				$("#pc_part_5").show()
+				$("#pc_part_7").show();
+				$("#pc_part_3").hide();
+				$("#pc_part_4").hide();
+				$("#pc_part_2").hide();
+				$("#pc_part_8").hide();
+				$("#pc_part_6").hide();
+			});
+			
+			//退出登录
+			$("#logout").click(function(){
+				delCookie("uId");
+				delCookie("name");
+				window.location.href = "log_in.html";
+			});
+			
+			//打开活动列表
+			$("#action_button").click(function(){
+				$("#pc_part_1").show();
+				$("#pc_part_8").show();
+				$("#pc_part_5").show();
+				$("#pc_part_2").hide();
+				$("#pc_part_7").hide();
+				$("#pc_part_4").hide();
+				$("#pc_part_6").hide();
+				$("#pc_part_3").hide();
+				$.ajax({
+					url: basePath + "note/actionnote.do",
+					type : "post",
+					data : {},
+					dataType : "json",
+					success : function(result){
+						if(result.status==0){
+							var list_data = result.data;
+							$(list_data).each(function(i){
+								var activityId = this.cn_activity_id;
+								var li_s= "<li class='offline'>"+
+									"<a>"+
+										"<i class='fa fa-file-text-o'"+ 
+										"title='online' rel='tooltip-bottom'>"+
+										this.cn_note_activity_title+"数量"+(i+1)+											
+										"</i>"+
+									"</a>"+
+								"</li>";
+								//创建节点
+								var $lis = $(li_s);
+								$lis.data("activityId",activityId);
+								$("#showaction_note").append($lis);
+							});
+						}
+					},
+					error : function(){
+						alert("网络异常,请稍后再试");
+					}
+				});
+			});	
+			//打开移动按钮
+			$("#note_list").on("click",".btn_move",function(){
+				//加载当前选中的按钮的noteId
+				var $lis = $("#note_list li a.checked").parent();
+				var noteId = $lis.data("note_Id");
+				$("#can").load("alert/alert_move.html");
+				$(".opacity_bg").show();
+				$.ajax({
+					url : basePath+"notebook/loadbooks.do",
+					type : "post",
+					data : {"userId":uId},
+					dataType : "json",
+					success : function(result){
+						if(result.status==0){
+							var list_data = result.data;
+							$(list_data).each(function(){
+								 var options = "<option value='"+this.cn_notebook_id+"'>"+this.cn_notebook_name+"</option>";
+								 var $option = $(options);
+								 //将noteId藏于确定按钮中
+								 $("#sure_button").data("noteId",noteId);
+								 $("#moveSelect").append($option);
+							});
+						}
+					},
+					error : function(){
+						alert("网络异常!");
+					}
+				});
+				
+				//点击确定按钮.将笔记移动到相应的笔记本
+				$("#can").on("click","#sure_button",function(){
+					//获取藏于按钮中的值
+					var noteId = $("#sure_button").data("noteId");
+					//获取选项列表中的option的value值
+					var noteBookId = $("#moveSelect option:checked").val();
+					
+					//发送ajax请求
+					$.ajax({
+						url : basePath + "note/move.do",
+						type : "post",
+						data : {"noteId":noteId,"noteBookId":noteBookId},
+						dataType : "json",
+						success : function(result){
+							if(result.status==0){
+								//移动成功
+								//关闭窗口
+//								alert("移动成功!");
+								$("#modalBasicLabel_11").html("笔记移动中..");
+								setTimeout(function(){
+									closeNoteWindows();
+									flushPage();
+								},2000);
+							}
+						},
+						error : function(){
+							alert("网络异常!");
+						}
+					});
+				});
+			});
+			$("#replayNoteInput").on("click",".btn_delete",function(){
+				var $lis = $(this).parent().parent("li");
+				var noteId = $lis.data("noteId");
+				//加载背景
+				$(".opacity_bg").show();
+				//打开彻底删除页面
+				$("#can").load("alert/alert_delete_rollback.html",function(){
+					$("#can").on("click","#delete_note_id",function(){
+						$.ajax({
+							url : basePath +"note/delete.do",
+							type : "post",
+							data : {"noteId":noteId},
+							dataType : "json",
+							success : function(result){
+								if(result.status==0){
+									$("#modalBasicLabel_10").html("正在删除...");
+									//再次点击页面.自动触发一次请求
+									setTimeout(function(){
+										closeNoteWindows();
+										$("#rollback_button").trigger("click");
+									}, 3000);
+								}
+							},
+							error : function(){
+								alert("网络异常!");
+							}
+						});
+					});
+				});
+				
+			});
+		});
+		</script>								
+    </head>
+    <body class="animated fadeIn">
+        <header class="header">
+            <div class="header-brand">
+                <a data-pjax=".content-body" href="edit.html">
+                    <img class="brand-logo" src="images/dummy/8986f28e.stilearn-logo.png" alt="Stilearn Admin Sample Logo">
+                </a>
+            </div>
+            <div class="header-profile">
+                <div class="profile-nav">
+                    <span class="profile-username"></span>
+                    <a  class="dropdown-toggle" data-toggle="dropdown">
+                        <span class="fa fa-angle-down"></span>
+                    </a>
+                    <ul class="dropdown-menu animated flipInX pull-right" role="menu">
+                        <li><a href="change_password.html" id = ""><i class="fa fa-user"></i> 修改密码</a></li>
+                        <li class="divider"></li>
+                        <li><a id="logout" href="#" ><i class="fa fa-sign-out"></i> 退出登录</a></li>
+                    </ul>
+                </div>
+            </div>
+            <form class="form-inline" onsubmit="return false;">
+                <button type="button" class="btn btn-default btn-expand-search"><i class="fa fa-search"></i></button>
+                <div class="toggle-search">
+                    <input type="text" class="form-control" placeholder="搜索笔记" id='search_note'>
+                    <button type="button" class="btn btn-default btn-collapse-search"><i class="fa fa-times"></i></button>
+                </div>
+            </form>
+            <ul class="hidden-xs header-menu pull-right">
+                <li>
+                    <a href="activity.html" target='_blank' title="笔记活动">活动</a>
+                </li>
+            </ul>
+        </header>
+		<div class="row" style='padding:0;' id='center'>
+			<!-- alert_background-->
+			<div class="opacity_bg" style='display:none'></div>
+			<!-- alert_notebook -->
+			<div id="can"></div>
+			<div class="col-xs-2" style='padding:0;' id='pc_part_1'>
+				<!-- side-right -->
+				<div class="pc_top_first">
+					<h3>全部笔记本</h3>
+					<button type="button" class="btn btn-default btn-xs btn_plus" id='add_notebook'><i class="fa fa-plus"></i></button>
+				</div>
+				<aside class="side-right" id='first_side_right'>
+					<div class="module" data-toggle="niceScroll">
+						<div class="chat-contact">
+							<div class="contact-body">
+								<ul id ="book_list" class="contacts-list">
+									<!-- 加载笔记本列表 -->
+								</ul>
+							</div>
+						</div>
+					</div>
+				</aside>
+				<div class="row clear_margin">
+					<div class="col-xs-4 click" id='rollback_button' title='回收站'><i class='fa fa-trash-o' style='font-size:20px;line-height:31px;'></i></div>
+					<div class="col-xs-4 click" id='like_button' title='收藏笔记本'><i class='fa fa-star' style='font-size:20px;line-height:31px;'></i></div>
+					<div class="col-xs-4 click" id='action_button' title='参加活动笔记'><i class='fa fa-users' style='font-size:20px;line-height:30px;'></i></div>
+				</div>
+			</div>
+			<!-- 全部笔记本 -->
+			<!-- 全部笔记 -->
+			<div class="col-xs-3" style='padding:0;' id='pc_part_2'>
+				<div class="pc_top_second" id='notebookId'>
+					<h3>全部笔记</h3>
+					<button type="button" class="btn btn-default btn-xs btn_plus" id='add_note'><i class="fa fa-plus"></i></button>
+				</div>
+				<aside class="side-right" id='second_side_right'>
+					<div class="module" data-toggle="niceScroll">
+						<div class="chat-contact">
+							<div class="contact-body">
+								<ul id = "note_list" class="contacts-list">
+									<!-- 加载笔记列表 -->
+								</ul>
+							</div>
+						</div>
+					</div>
+				</aside>
+			</div>
+			<!-- 全部笔记 -->
+			<!-- 回收站笔记 -->
+			<div class="col-xs-3" style='padding:0;display:none;' id='pc_part_4'>
+				<div class="pc_top_second">
+					<h3>回收站笔记</h3>
+				</div>
+				<aside class="side-right" id='four_side_right'>
+					<div class="module" data-toggle="niceScroll">
+						<div class="chat-contact">
+							<div class="contact-body">
+								<ul id = "replayNoteInput" class="contacts-list">
+								</ul>
+							</div>
+						</div>
+					</div>
+				</aside>
+			</div>
+			<!-- 回收站笔记 -->
+			<!-- 搜索笔记列表 -->
+			<div class="col-xs-3" style='padding:0;display:none;' id='pc_part_6'>
+				<div class="pc_top_second">
+					<h3>搜索结果</h3>
+				</div>
+				<aside class="side-right" id='sixth_side_right'>
+					<div class="module" data-toggle="niceScroll">
+						<div class="chat-contact">
+							<div class="contact-body">
+								<ul class="contacts-list" id = "search_recycle">
+									<!-- 加载分享笔记 -->
+								</ul>
+							</div>
+						</div>
+						<div id='more_note'>更多...</div>
+					</div>
+				</aside>
+			</div>
+			<!-- 搜索笔记列表 -->
+			<!-- 收藏笔记列表 -->
+			<div class="col-xs-3" style='padding:0;display:none;' id='pc_part_7'>
+				<div class="pc_top_second">
+					<h3>已收藏笔记</h3>
+				</div>
+				<aside class="side-right" id='seventh_side_right'>
+					<div class="module" data-toggle="niceScroll">
+						<div class="chat-contact">
+							<div class="contact-body">
+								<ul class="contacts-list">
+									<!--li class="idle"><a ><i class="fa fa-file-text-o" title="online" rel="tooltip-bottom"></i> switch多分支结构<button type="button" class="btn btn-default btn-xs btn_position btn_delete"><i class="fa fa-times"></i></button></a></li-->
+								</ul>
+							</div>
+						</div>
+					</div>
+				</aside>
+			</div>
+			<!-- 收藏笔记列表 -->
+			<!-- 参加活动的笔记列表 -->
+			<div class="col-xs-3" style='padding:0;display:none;' id='pc_part_8'>
+				<div class="pc_top_second">
+					<h3>参加活动的笔记</h3>
+				</div>
+				<aside class="side-right" id='eighth_side_right'>
+					<div class="module" data-toggle="niceScroll">
+						<div class="chat-contact">
+							<div class="contact-body">
+								<ul class="contacts-list" id = "showaction_note">
+									<!--li class="offline"><a ><i class="fa fa-file-text-o" title="online" rel="tooltip-bottom"></i> 样式用例（点击无效）</a></li-->
+								</ul>
+							</div>
+						</div>
+					</div>
+				</aside>
+			</div>
+			<!-- 参加活动的笔记列表 -->
+			<!-- 编辑笔记 -->
+			<div class="col-sm-7" id='pc_part_3'>
+				<!-- side-right -->
+				<div class="pc_top_third">
+					<div class="row">
+						<div class="col-xs-9">
+							<h3>编辑笔记</h3>
+						</div>
+						<div class="col-xs-3">
+							<button type="button" class="btn btn-block btn-sm btn-primary" id='save_note'>保存笔记</button>
+						</div>
+					</div>
+				</div>
+				<aside class="side-right" id='third_side_right'>
+					<div class="module" data-toggle="niceScroll">
+						<div class="chat-contact">
+							<div class="contact-body clear_margin">
+								<!--- 笔记标题 --->
+								<div class="row" >
+									<div class="col-xs-8">
+										<input type="text" class="form-control" id="input_note_title" placeholder='笔记标题...'>
+									</div>
+								</div>
+								<!--- 笔记标题 --->
+								<div class="row">
+									<div class="col-sm-12">
+										<!--- 输入框 --->
+										<script type="text/plain" id="myEditor" style="width:100%;height:400px;">
+										</script>
+										<!--- 输入框 --->
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</aside>
+			</div>
+			<!-- 编辑笔记 -->
+			<!-- 预览笔记 -->
+			<div class="col-sm-7" id='pc_part_5' style='display:none;'>
+				<div class="pc_top_third">
+					<div class="row">
+						<div class="col-xs-9">
+							<h3>预览笔记</h3>
+						</div>
+					</div>
+				</div>
+				<aside class="side-right" id='fifth_side_right'>
+					<div class="module" data-toggle="niceScroll">
+						<div class="chat-contact">
+							<div class="contact-body clear_margin">
+								<!-- 预览笔记Tilte -->
+								<h4 id="noput_note_title"></h4>
+								<p id = "noput_note_body">
+								<!-- 预览笔记Body -->
+								</p>
+							</div>
+						</div>
+					</div>
+				</aside>
+			</div>
+			<!-- 预览笔记 -->
+		</div>
+        <footer>
+            <p>&copy; 2014 Stilearning</p>
+			<div style='position:absolute;top:5PX;height:30px;right:20px;line-height:26px;border:1px solid #0E7D76;display:none;background:#fff'>
+				<strong style='color:#0E7D76;margin:0 10px;'></strong>
+			</div>
+        </footer>
+        </script>
+        <!-- Bootstrap框架JS -->
+        <script src="scripts/bootstrap.min.js"></script>
+        <script src="scripts/js-prototype.js"></script>       
+        <script src="scripts/theme-setup.js"></script>
+		<!-- Google-Code代码高亮JS -->
+        <script class="re-execute" src="scripts/run_prettify.js"></script>
+		<!-- Ueditor编辑器JS -->
+		<script type="text/javascript" charset="utf-8" src="scripts/ue/umeditor.config.js"></script>
+		<script type="text/javascript" charset="utf-8" src="scripts/ue/umeditor.min.js"></script>
+		<script type="text/javascript" src="scripts/ue/lang/zh-cn.js"></script>
+		<script type="text/javascript">
+			//加载DOM之后处理页面高度
+			function get_dom(e){
+				return document.getElementById(e);
+			}
+			function set_height(){
+				var pc_height=window.innerHeight;
+				pc_height=pc_height-132;
+				get_dom('first_side_right').style.height=(pc_height-31)+'px';
+				get_dom('second_side_right').style.height=pc_height+'px';
+				get_dom('four_side_right').style.height=pc_height+'px';
+				get_dom('sixth_side_right').style.height=pc_height+'px';
+				get_dom('seventh_side_right').style.height=pc_height+'px';
+				get_dom('eighth_side_right').style.height=pc_height+'px';
+				get_dom('third_side_right').style.height=(pc_height-15)+'px';
+				get_dom('fifth_side_right').style.height=(pc_height-15)+'px';
+			}
+			function myEditorWidth(){
+				var dom=get_dom('third_side_right');
+				var style=dom.currentStyle||window.getComputedStyle(dom, null);
+				get_dom('myEditor').style.width=style.width;
+			}
+			set_height();
+			//改变窗口大小时调整页面尺寸
+			window.onresize=function(){
+				set_height();
+				var width=$('#third_side_right').width()-35;
+				$('.edui-container,.edui-editor-body').width(width);
+				$('#myEditor').width(width-20);
+			};
+		</script>
+		<script type="text/javascript">
+			//重写JS原生alert函数
+				window.alert=function(e){
+					$('#can').load('./alert/alert_error.html',function(){
+						$('#error_info').text(' '+e);
+						$('.opacity_bg').show();
+					});
+				}
+			//获取笔记本列表
+			//get_nb_list();
+			//获取特殊笔记本ID
+			//get_spnb_list();
+			//实例化Ueditor编辑器
+			//var um = UM.getEditor('myEditor');
+			//um.setContent("<h1>sdfasdfasdf</h1>");
+			//um.getContent();
+		</script>
+		</body>		
+</html>

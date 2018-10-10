@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8" ?>  
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+   
+    
+    <mapper namespace = "org.anonymous.note.dao.ShareDao">
+    	<select id="findId"
+    			parameterType = "string"
+    			resultType="org.anonymous.note.entiry.Share">
+    			SELECT 
+    				* 
+    			FROM 
+    				cn_share 
+    			WHERE 
+    				cn_share_id = #{cn_share_id}
+    	</select>
+    	
+    	<select id = "findLikeTitle"
+    			parameterType = "string"
+    			resultType = "map">
+    			SELECT
+    				cn_share_title,
+    				cn_share_id 
+    			FROM 
+    				cn_share 
+    			WHERE 
+    				cn_share_title 
+    			LIKE 
+    				#{cn_share_title}
+    	</select>
+    
+    	 <select id = "findShareNoteId"
+    			 parameterType = "string"
+    			 resultType = "org.anonymous.note.entiry.Share">
+    			SELECT 
+    				* 
+    			FROM 
+    				cn_share 
+    			WHERE 
+    				cn_note_id = #{cn_note_id}
+    	</select>
+    	
+    	<insert id="save"
+    			parameterType = "org.anonymous.note.entiry.Share">
+				INSERT INTO 
+					cn_share
+					(cn_share_id,cn_share_title,
+					cn_share_body,cn_note_id)
+				VALUES
+					(#{cn_share_id},#{cn_share_title},
+					#{cn_share_body},#{cn_note_id})
+    	</insert>
+    </mapper>

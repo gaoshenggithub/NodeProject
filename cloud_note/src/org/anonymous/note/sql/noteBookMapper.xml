@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" ?>  
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    <mapper namespace = "org.anonymous.note.dao.NoteBookDao"> 
+    	<!-- 用户登录成功/展示笔记本列表 -->
+    	<select id="findByUser"
+    	parameterType= "string"
+    	resultType = "map">
+    		SELECT
+				cn_notebook_id,cn_user_id,
+				cn_notebook_type_id,cn_notebook_name,
+				cn_notebook_desc,cn_notebook_createtime
+			FROM 
+				cn_notebook
+			WHERE 
+				cn_user_id = #{userId}
+			ORDER BY 
+				cn_notebook_createtime 
+			DESC
+    	</select>
+    	
+    	<!-- 创建笔记本 -->
+    	<insert id="save" 
+    			parameterType = "org.anonymous.note.entiry.NoteBook">
+    			INSERT INTO 
+    				cn_notebook(
+    					cn_notebook_id,cn_user_id,
+    					cn_notebook_type_id,cn_notebook_name,
+    					cn_notebook_desc,cn_notebook_createtime
+    				)
+    			VALUES(
+    				#{cn_notebook_id},#{cn_user_id},
+    				#{cn_notebook_type_id},#{cn_notebook_name},
+    				#{cn_notebook_desc},#{cn_notebook_createtime}
+    			)	
+    	</insert>
+    </mapper>

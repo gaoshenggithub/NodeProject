@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="utf-8" ?>  
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace = "org.anonymous.note.dao.NoteDao">
+	<delete id="deleteNotes">
+		delete from cn_note 
+		where cn_note_id in 
+		<foreach collection="array" 
+			open="(" close=")" 
+			item="cn_note_id" 
+			separator=",">
+			#{cn_note_id}
+		</foreach>
+	</delete>
+	
+	<update id="udpateNotes"
+			parameterType = "map">
+		update cn_note 
+		<set>
+		<if test="cn_note_id!=null">
+			 cn_note_id = #{cn_note_id}
+		</if>
+		<if test="cn_notebook_id!=null">
+	  		 cn_notebook_id = #{cn_notebook_id}
+		</if>
+		<if test="cn_user_id!=null">
+		     cn_user_id = #{cn_user_id}
+		</if>
+		<if test="cn_note_status_id!=null">
+		     cn_note_status_id = #{cn_note_status_id} 
+		</if>
+		<if test="cn_note_title!=null">
+		     cn_note_title = #{cn_note_title}
+		</if>
+		<if test="cn_note_body!=null">
+		     cn_note_body = #{cn_note_body}
+		</if>
+		<if test="cn_note_create_time!=null">
+		     cn_note_create_time = #{cn_note_create_time}
+		</if>
+		<if test="cn_note_last_modify_time!=null">
+		     cn_note_last_modify_time = #{cn_note_last_modify_time}
+		</if>
+		</set> 
+	     where cn_note_id =#{cn_note_id}
+	</update>
+	
+	<select id="search"
+			parameterType="map"
+			resultType="org.anonymous.note.entiry.Note">
+		SELECT 
+			cn_note_id,cn_note_title,cn_note_create_time 
+		FROM 
+			cn_note
+			
+			cn_note_title 
+		LIKE 
+			#{title}
+		
+		AND	
+			cn_note_status_id = #{status}
+		AND
+			cn_note
+			
+		
+	</select>
+	
+	
+	<select id="hightSearch"
+			parameterType = "map"
+			resultType = "org.anonymous.note.entiry.Note">
+			SELECT cn_note_id,cn_note_title,cn_note_create_time FROM cn_note 
+			<where>
+				<if test="title!=null">
+					cn_note_title LIKE #{title}
+				</if>
+				<if test = "status!=null">
+					AND cn_note_status_id = #{status}
+				</if>
+				<if test = "beginTime!=null">
+					AND cn_note_create_time >= #{beginTime}
+				</if>
+				<if test = "endTime!=null">
+					AND cn_note_create_time &lt;= #{endTime}
+				</if>
+			</where>
+	</select>
+	
+	<update id="replayNote"
+			parameterType = "org.anonymous.note.entiry.Note">
+			UPDATE 
+				cn_note 
+			SET 
+				cn_notebook_id = #{cn_notebook_id},
+				cn_note_status_id="1" 
+			WHERE 
+				cn_note_id = #{cn_note_id}
+		</update>
+	<update id = "updateStatus" 
+			parameterType = "string">
+			UPDATE 
+				cn_note
+			SET
+				cn_note_status_id = '2'
+			WHERE
+				cn_note_id = #{cn_note_id}		
+	</update>
+	
+	<!-- 根据笔记本ID查找笔记 -->
+	<select id="findByBookId"
+			parameterType = "string"
+			resultType = "map">
+			SELECT
+				cn_note_id,cn_note_title
+			FROM 
+				cn_note
+			WHERE
+				cn_notebook_id = #{noteBookId}
+			AND 
+				cn_note_status_id = "1"
+			ORDER BY 
+				cn_note_create_time 
+			DESC
+	</select>
+	
+	<!-- 创建笔记 -->
+	<insert id="save" 
+			parameterType = "org.anonymous.note.entiry.Note">
+			INSERT INTO
+				cn_note(
+					cn_note_id,cn_notebook_id,
+					cn_user_id,cn_note_status_id,
+					cn_note_type_id,cn_note_title,
+					cn_note_body,cn_note_create_time,
+					cn_note_last_modify_time
+				)
+			VALUES(
+				#{cn_note_id},#{cn_notebook_id},
+				#{cn_user_id},#{cn_note_status_id},
+				#{cn_note_type_id},#{cn_note_title},
+				#{cn_note_body},#{cn_note_create_time},
+				#{cn_note_last_modify_time}
+			)
+	</insert>
+	
+	<!-- 根据笔记ID查找笔记内容和标题 -->
+	<select id="findNoteId"
+			parameterType = "string"
+			resultType = "org.anonymous.note.entiry.Note">
+			SELECT 
+				*
+			FROM
+				cn_note
+			WHERE
+				cn_note_id = #{noteId}		
+	</select>
+	
+	<!-- 更新笔记标题和内容 -->
+	<update id="update"
+			parameterType = "org.anonymous.note.entiry.Note">
+			UPDATE 
+				cn_note 
+			SET
+				cn_note_title = #{cn_note_title},
+				cn_note_body = #{cn_note_body},
+				cn_note_last_modify_time = #{cn_note_last_modify_time} 
+			WHERE 
+				cn_note_id = #{cn_note_id}
+	</update>
+	
+	<select id="findRecycleId"
+			parameterType = "string"
+			resultType = "org.anonymous.note.entiry.Note">
+			
+			SELECT 
+				* 
+			FROM 
+				cn_note 
+			WHERE 
+				cn_user_id = #{cn_user_id} 
+			AND 
+				cn_note_status_id="2"
+	</select>
+	
+	
+	<!-- 活动笔记 -->
+	<select id = "selectActionNote"
+			resultType = "org.anonymous.note.entiry.ActivityNote">
+			select * from cn_note_activity;
+	</select>
+	
+	<select id="moveNote"
+			parameterType = "org.anonymous.note.entiry.Note">
+			UPDATE 
+				cn_note 
+			SET 
+				cn_notebook_id = #{cn_notebook_id}
+			WHERE 
+				cn_note_id = #{cn_note_id} 
+	</select>
+	
+	<delete id="deleteNote"
+			parameterType = "string">
+			delete from cn_note where cn_note_id = #{cn_note_id}
+			</delete>
+</mapper>

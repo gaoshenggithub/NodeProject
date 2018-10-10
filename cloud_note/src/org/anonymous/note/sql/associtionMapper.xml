@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8" ?>  
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+    <mapper namespace = "org.anonymous.note.dao.AssicotionDao">
+    	 <!-- 
+    	 <select id="findByUserId"
+    			parameterType = "string"
+    			resultType = "org.anonymous.note.entiry.User">
+    		select * from cn_user where cn_user_id = #{cn_user_id}
+    	</select>
+    	  -->
+    	  
+    	   <select id="findByUserId"
+    	 		 parameterType = "string"
+    	 		 resultMap="userMap">
+    	 	select * from cn_user where cn_user_id = #{cn_user_id}
+    	 </select>
+		<resultMap type="org.anonymous.note.entiry.User" 
+				   id="userMap">
+				   <collection property= "books"
+				   			   javaType = "java.util.List"
+				   			   ofType= "org.anonymous.note.entiry.NoteBook"
+				   			   select = "findNoteBook"
+				   			   column="cn_user_id">
+				   </collection>
+		</resultMap>
+    	<select id = "findNoteBook"
+    			parameterType = "string"
+    			resultType = "org.anonymous.note.entiry.NoteBook">
+    		select * from cn_notebook where cn_user_id = #{cn_user_id}
+    	</select>
+    	
+    	
+    	<select id="findAll" resultMap = "userMap1">
+    		select * 
+    		from cn_user usr 
+    		left outer 
+    		join cn_notebook notebook on(usr.cn_user_id=notebook.cn_user_id);
+    	</select>
+    	<resultMap type="org.anonymous.note.entiry.User" id="userMap1">
+    		<id property = "cn_user_id" column = "cn_user_id"/>
+    		<result property = "cn_user_name" column = "cn_user_name"/>
+    		<result property = "cn_user_password" column = "cn_user_password"/>
+    		<result property = "cn_user_token" column = "cn_user_token"/>
+    		<result property = "cn_user_nick" column = "cn_user_nick"/>
+    		<collection property = "books"
+    					javaType = "java.util.List"
+    					ofType = "org.anonymous.note.entiry.NoteBook">
+    					<id property = "cn_notebook_id" column = "cn_notebook_id"/>
+    					<result property = "cn_user_id" column = "cn_user_id"/>
+    					<result property = "cn_notebook_type_id" column = "cn_notebook_type_id"/>
+    					<result property = "cn_notebook_name" column = "cn_notebook_name"/>
+    					<result property = "cn_notebook_desc" column = "cn_notebook_desc"/>
+    					<result property = "cn_notebook_createtime" column = "cn_notebook_createtime"/>
+    		</collection>
+    	</resultMap>
+    	
+    	
+    	<select id="findBookNotes"
+    			resultMap = "userMap2">
+    				select * from cn_notebook notebook join cn_user usr 
+    					on(notebook.cn_user_id=usr.cn_user_id)
+    			</select>
+    	<resultMap type="org.anonymous.note.entiry.NoteBook" 
+    				id="userMap2">
+    				<id property = "cn_notebook_id" column = "cn_notebook_id"/>
+    					<result property = "cn_user_id" column = "cn_user_id"/>
+    					<result property = "cn_notebook_type_id" column = "cn_notebook_type_id"/>
+    					<result property = "cn_notebook_name" column = "cn_notebook_name"/>
+    					<result property = "cn_notebook_desc" column = "cn_notebook_desc"/>
+    					<result property = "cn_notebook_createtime" column = "cn_notebook_createtime"/>
+    					<collection property="user"
+    								 javaType = "org.anonymous.note.entiry.User">
+    						    		<id property = "cn_user_id" column = "cn_user_id"/>
+    									<result property = "cn_user_name" column = "cn_user_name"/>
+							    		<result property = "cn_user_password" column = "cn_user_password"/>
+							    		<result property = "cn_user_token" column = "cn_user_token"/>
+							    		<result property = "cn_user_nick" column = "cn_user_nick"/>			 
+    					</collection>
+    				</resultMap>		
+    </mapper>
